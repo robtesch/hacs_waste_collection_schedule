@@ -12,6 +12,7 @@ from fetch import download_docx, fetch_region_docs
 from generate_mapping import (
     _format_mapping_block,
     build_collection_areas,
+    format_python_file,
     replace_mapping_block,
 )
 
@@ -84,6 +85,7 @@ def main() -> int:
         encoding="utf-8",
     )
     changed = replace_mapping_block(args.target, block)
+    format_python_file(args.target)
     print("Mapping updated." if changed else "Mapping unchanged.")
     return 0
 

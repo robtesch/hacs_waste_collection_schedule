@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import subprocess
 from datetime import date
 from pathlib import Path
 
@@ -12,6 +14,32 @@ from parse_docx import parse_docx_bytes
 
 BEGIN_MARKER = "# BEGIN GENERATED DURBAN AREA MAPPING"
 END_MARKER = "# END GENERATED DURBAN AREA MAPPING"
+_SCHEDULE_DATE_RE = re.compile(r"/(\d{4})/(\d{2})/(\d{2})/")
+
+
+def schedule_date_from_url(url: str) -> date | None:
+    """Extract a YYYY/MM/DD publish date from a council DOCX URL path."""
+    match = _SCHEDULE_DATE_RE.search(url)
+    if match is None:
+        return None
+    year, month, day = (int(part) for part in match.groups())
+    return date(year, month, day)
+
+
+def schedule_date_from_sources(region_sources: dict[str, str]) -> date | None:
+    """Return the newest schedule publish date found across source URLs."""
+    dates = [
+        parsed
+        for url in region_sources.values()
+        if (parsed := schedule_date_from_url(url)) is not None
+    ]
+    return max(dates) if dates else None
+
+
+def format_python_file(path: Path) -> None:
+    """Apply repo ruff rules so generated output matches committed style."""
+    subprocess.run(["ruff", "check", "--fix", str(path)], check=True)
+    subprocess.run(["ruff", "format", str(path)], check=True)
 
 
 def _format_mapping_block(
@@ -24,7 +52,9 @@ def _format_mapping_block(
     ]
     for region in sorted(collection_areas):
         lines.append(f"#   - {region}: {region_sources.get(region, 'unknown')}")
-    lines.append(f"# Last generated: {date.today().isoformat()}")
+    schedule_date = schedule_date_from_sources(region_sources)
+    if schedule_date is not None:
+        lines.append(f"# Based on schedules dated: {schedule_date.isoformat()}")
     lines.append("COLLECTION_AREAS = {")
 
     for region in sorted(collection_areas):
@@ -112,6 +142,10 @@ def main() -> int:
 
     if args.sources_json and args.sources_json.exists():
         region_sources = json.loads(args.sources_json.read_text(encoding="utf-8"))
+    else:
+        sources_path = args.cache_dir / "source_links.json"
+        if sources_path.exists():
+            region_sources = json.loads(sources_path.read_text(encoding="utf-8"))
 
     for docx_path in sorted(args.cache_dir.glob("*.docx")):
         region = docx_path.stem
@@ -133,6 +167,7 @@ def main() -> int:
         return 0
 
     changed = replace_mapping_block(args.target, block)
+    format_python_file(args.target)
     print(f"Updated {args.target}" if changed else f"No changes in {args.target}")
     return 0
 
