@@ -18,3 +18,8 @@ custom_components/waste_collection_schedule/waste_collection_schedule/test/secre
 
 # Personal overrides on top of the tracked CLAUDE.md.
 CLAUDE.local.md
+
+# Durban updater tooling cache (fork-only)
+tools/durban_gov_za/cache/
+tools/durban_gov_za/downloads/
+tools/durban_gov_za/output/
