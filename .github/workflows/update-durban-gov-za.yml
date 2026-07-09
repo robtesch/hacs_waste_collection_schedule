@@ -5,11 +5,12 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   update-calendars:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout tooling branch
         uses: actions/checkout@v4
@@ -21,6 +22,7 @@ jobs:
         with:
           ref: data/durban-gov-za
           path: data-out
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,6 +37,8 @@ jobs:
 
       - name: Commit and push calendar updates
         working-directory: data-out
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           if git diff --quiet; then
@@ -45,4 +49,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "Update eThekwini hosted calendars from council DOCX schedules."
-          git push
+          git push origin "HEAD:data/durban-gov-za"
