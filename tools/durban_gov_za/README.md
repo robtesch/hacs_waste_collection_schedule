@@ -29,8 +29,12 @@ Public URLs (used by the upstream `durban_gov_za` source):
 
 A GitHub Actions workflow (`.github/workflows/update-durban-gov-za.yml`) runs on
 your fork to watch for changes in the council's published DOCX schedules. Keep
-this workflow on your `tooling/durban-updater` branch — do **not** include it in
-upstream PRs.
+this workflow on your fork's `master` branch — do **not** include it in upstream
+PRs.
+
+The workflow uses plain `git`/`pip` shell steps because some forks restrict
+third-party GitHub Actions. If your fork allows marketplace actions, you can
+switch back to `actions/checkout` and `actions/setup-python` if you prefer.
 
 | When | How |
 |------|-----|
