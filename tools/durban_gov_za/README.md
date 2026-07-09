@@ -25,16 +25,23 @@ Public URLs (used by the upstream `durban_gov_za` source):
 - `https://raw.githubusercontent.com/robtesch/hacs_waste_collection_schedule/refs/heads/data/durban-gov-za/index.json`
 - `https://raw.githubusercontent.com/robtesch/hacs_waste_collection_schedule/refs/heads/data/durban-gov-za/calendars/{region}/{area}.ics`
 
+## Fork branch layout
+
+| Branch | Purpose |
+|---|---|
+| `master` | Mirrors `upstream/master` only — sync, do not develop here |
+| `tooling/durban-updater` | **Default branch.** Tooling, CI workflows, Durban updater Action |
+| `data/durban-gov-za` | Hosted ICS calendars + `index.json` |
+| `source/durban-gov-za-ics` | Clean upstream PR branches (from `upstream/master`) |
+
 ## Automated weekly update
 
-A GitHub Actions workflow (`.github/workflows/update-durban-gov-za.yml`) runs on
-your fork to watch for changes in the council's published DOCX schedules. Keep
-this workflow on your fork's `master` branch — do **not** include it in upstream
-PRs.
+A GitHub Actions workflow (`.github/workflows/update-durban-gov-za.yml`) lives on
+`tooling/durban-updater` (the fork default branch) and watches for changes in
+the council's published DOCX schedules. Do **not** include it in upstream PRs.
 
-The workflow uses plain `git`/`pip` shell steps because some forks restrict
-third-party GitHub Actions. If your fork allows marketplace actions, you can
-switch back to `actions/checkout` and `actions/setup-python` if you prefer.
+The workflow uses plain `git`/`pip` shell steps for compatibility. If you prefer,
+you can switch to `actions/checkout` and `actions/setup-python`.
 
 | When | How |
 |------|-----|
