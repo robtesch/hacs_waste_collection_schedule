@@ -2,13 +2,30 @@
 
 Fork-only tooling that downloads regional DOCX schedules from
 [durban.gov.za](https://www.durban.gov.za/page/refuse-collection-schedules),
-parses area-to-weekday mappings, and regenerates the `COLLECTION_AREAS` block in
-`durban_gov_za.py`.
+parses area-to-weekday mappings, and publishes hosted ICS calendars on the
+`data/durban-gov-za` branch.
 
 This directory is **not** submitted upstream. Upstream PRs contain only the
-generated provider file, documentation, and the `za` country-code entry.
+ICS-fetching provider file, documentation, and the `za` country-code entry.
 
-## Automated weekly check
+## Hosted calendars
+
+Generated output lives on branch **`data/durban-gov-za`**:
+
+```
+/
+├── index.json
+└── calendars/
+    └── {region}/
+        └── {area}.ics
+```
+
+Public URLs (used by the upstream `durban_gov_za` source):
+
+- `https://raw.githubusercontent.com/robtesch/hacs_waste_collection_schedule/refs/heads/data/durban-gov-za/index.json`
+- `https://raw.githubusercontent.com/robtesch/hacs_waste_collection_schedule/refs/heads/data/durban-gov-za/calendars/{region}/{area}.ics`
+
+## Automated weekly update
 
 A GitHub Actions workflow (`.github/workflows/update-durban-gov-za.yml`) runs on
 your fork to watch for changes in the council's published DOCX schedules. Keep
@@ -18,35 +35,14 @@ upstream PRs.
 | When | How |
 |------|-----|
 | **Schedule** | Every Monday at 06:00 UTC |
-| **Manual run** | Actions → *Update Durban schedule mapping* → *Run workflow* |
+| **Manual run** | Actions → *Update Durban schedule calendars* → *Run workflow* |
 
 **What it does each run:**
 
-1. Installs the updater dependencies.
+1. Checks out `tooling/durban-updater` and the `data/durban-gov-za` branch.
 2. Downloads the latest regional DOCX files from durban.gov.za and parses them.
-3. Regenerates the `COLLECTION_AREAS` block in `durban_gov_za.py` (in the
-   ephemeral CI checkout — nothing is committed automatically).
-4. Runs `ruff check --fix` and `ruff format` on the source file so the diff
-   reflects mapping changes only, not formatting drift.
-5. Compares the result against the committed source file.
-
-**If the mapping changed**, the workflow opens a GitHub issue titled *"Durban
-schedule mapping update available"*. The issue is a reminder to review the new
-mapping and cut a clean upstream PR — it does not open a PR or push commits for
-you.
-
-**When you see that issue:**
-
-1. Check out `tooling/durban-updater` locally.
-2. Run `python tools/durban_gov_za/update.py` to refresh the mapping.
-3. Follow the [clean upstream PR workflow](#clean-upstream-pr-workflow) below.
-4. Close the issue once the upstream PR is open (or merged).
-
-If no mapping changes are detected, the workflow finishes silently.
-
-The `# Based on schedules dated:` comment in the generated block is derived from the
-newest `YYYY/MM/DD` segment in the council DOCX URLs, not the date the updater was
-run. That keeps weekly runs stable when the published schedules have not changed.
+3. Regenerates `index.json` and per-area ICS files on `data/durban-gov-za`.
+4. Commits and pushes when the hosted calendars changed.
 
 ## Setup
 
@@ -54,22 +50,20 @@ run. That keeps weekly runs stable when the published schedules have not changed
 pip install -r tools/durban_gov_za/requirements.txt
 ```
 
-## Update the mapping
+## Update hosted calendars locally
 
 From the repository root:
 
 ```bash
-python tools/durban_gov_za/update.py
+python tools/durban_gov_za/update.py --output-dir /path/to/data/durban-gov-za/checkout
 ```
 
-The script runs `ruff check --fix` and `ruff format` on the target file after
-writing the generated block, so output matches repo style before you commit or
-open a PR.
+The default output directory is `data/durban-gov-za/` at the repo root.
 
 Options:
 
 - `--dry-run` — fetch and parse without writing files
-- `--target PATH` — path to `durban_gov_za.py` (default: repo source file)
+- `--output-dir PATH` — data branch root (default: `data/durban-gov-za`)
 - `--cache-dir PATH` — download directory (default: `tools/durban_gov_za/downloads`)
 - `--verify-ssl` — enable SSL certificate verification (disabled by default due to
   durban.gov.za certificate issues in some environments)
@@ -80,15 +74,18 @@ If you already have DOCX files in `downloads/`:
 
 ```bash
 python tools/durban_gov_za/generate_mapping.py \
-  --target custom_components/waste_collection_schedule/waste_collection_schedule/source/durban_gov_za.py \
+  --target /tmp/unused.py \
   --cache-dir tools/durban_gov_za/downloads
 ```
+
+For ICS output from cache, call `update.py` with a populated `downloads/` folder
+after placing `source_links.json` there, or run the full `update.py` fetch.
 
 ## Clean upstream PR workflow
 
 1. Keep this tooling on `tooling/durban-updater` in your fork.
-2. Run `update.py` to refresh the mapping.
-3. Create a clean branch from `upstream/master` with only:
+2. Push hosted calendars to `data/durban-gov-za` before opening the upstream PR.
+3. Create a clean branch from `upstream/master` (e.g. `source/durban-gov-za-ics`) with only:
    - `custom_components/.../source/durban_gov_za.py`
    - `doc/source/durban_gov_za.md`
    - `update_docu_links.py` (`za` country code)
@@ -97,11 +94,12 @@ python tools/durban_gov_za/generate_mapping.py \
 Example using a worktree:
 
 ```bash
-git worktree add ../hacs-durban-pr upstream/master -b source/durban-gov-za
+git fetch upstream
+git worktree add ../hacs-durban-ics upstream/master -b source/durban-gov-za-ics
 cp custom_components/waste_collection_schedule/waste_collection_schedule/source/durban_gov_za.py \
-   ../hacs-durban-pr/custom_components/waste_collection_schedule/waste_collection_schedule/source/
-cp doc/source/durban_gov_za.md ../hacs-durban-pr/doc/source/
-cp update_docu_links.py ../hacs-durban-pr/
+   ../hacs-durban-ics/custom_components/waste_collection_schedule/waste_collection_schedule/source/
+cp doc/source/durban_gov_za.md ../hacs-durban-ics/doc/source/
+cp update_docu_links.py ../hacs-durban-ics/
 ```
 
 ## Tests

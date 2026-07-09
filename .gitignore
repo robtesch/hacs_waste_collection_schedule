@@ -23,3 +23,5 @@ CLAUDE.local.md
 tools/durban_gov_za/cache/
 tools/durban_gov_za/downloads/
 tools/durban_gov_za/output/
+data/durban-gov-za/
+.venv-durban/

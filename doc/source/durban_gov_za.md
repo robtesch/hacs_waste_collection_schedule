@@ -2,6 +2,8 @@
 
 Support for schedules provided by [eThekwini Municipality refuse collection schedules](https://www.durban.gov.za/page/refuse-collection-schedules).
 
+Schedules are maintained as hosted ICS calendars by [@robtesch](https://github.com/robtesch), regenerated from the council's published regional DOCX files. The live feed is published on the [`data/durban-gov-za`](https://github.com/robtesch/hacs_waste_collection_schedule/tree/data/durban-gov-za) branch of the code owner's fork.
+
 ## Configuration via configuration.yaml
 
 ```yaml
@@ -69,3 +71,12 @@ If the same suburb name appears on multiple weekdays in your region's schedule, 
 
 - **General Waste** — collected weekly on your mapped weekday (including public holidays).
 - **Recycling** (orange bags) — collected fortnightly on the same weekday; not collected on South African public holidays.
+
+## Hosted feed
+
+At runtime this source fetches:
+
+- an area index from `index.json` on the `data/durban-gov-za` branch (for validation), and
+- per-area ICS calendars under `calendars/{region}/{area}.ics`.
+
+If you prefer to configure a calendar URL yourself, you can use the generic [ICS source](ics.md) with a direct `.ics` URL instead.

@@ -1,34 +1,26 @@
 #!/usr/bin/env python3
-"""Orchestrate fetching, parsing, and updating durban_gov_za.py."""
+"""Fetch council DOCX schedules and regenerate hosted ICS calendars."""
 
 from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
 from fetch import download_docx, fetch_region_docs
-from generate_mapping import (
-    _format_mapping_block,
-    build_collection_areas,
-    format_python_file,
-    replace_mapping_block,
-)
+from generate_calendars import write_calendars
+from generate_mapping import build_collection_areas
 
-DEFAULT_TARGET = (
-    Path(__file__).resolve().parents[2]
-    / "custom_components/waste_collection_schedule/waste_collection_schedule/source/durban_gov_za.py"
-)
+DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parents[2] / "data" / "durban-gov-za"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--target",
+        "--output-dir",
         type=Path,
-        default=DEFAULT_TARGET,
-        help="Path to durban_gov_za.py",
+        default=DEFAULT_OUTPUT_DIR,
+        help="Directory for index.json and calendars/ (data branch root)",
     )
     parser.add_argument(
         "--cache-dir",
@@ -39,7 +31,7 @@ def main() -> int:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Do not write files",
+        help="Fetch and parse only; print summary without writing calendars",
     )
     parser.add_argument(
         "--verify-ssl",
@@ -65,28 +57,23 @@ def main() -> int:
 
     collection_areas, built_sources = build_collection_areas(region_docs, docx_data)
     region_sources.update(built_sources)
-    block = _format_mapping_block(collection_areas, region_sources)
-
     total_areas = sum(len(areas) for areas in collection_areas.values())
     print(
         f"Parsed {total_areas} areas across {len(collection_areas)} regions.",
     )
 
     if args.dry_run:
-        print(block)
+        print("Dry run complete; no calendar files written.")
         return 0
 
-    if not args.target.exists():
-        print(f"Target file not found: {args.target}", file=sys.stderr)
-        return 1
+    if not args.dry_run:
+        sources_path.write_text(
+            json.dumps(region_sources, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
 
-    sources_path.write_text(
-        json.dumps(region_sources, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    changed = replace_mapping_block(args.target, block)
-    format_python_file(args.target)
-    print("Mapping updated." if changed else "Mapping unchanged.")
+    changed = write_calendars(collection_areas, region_sources, args.output_dir)
+    print("Calendars updated." if changed else "Calendars unchanged.")
     return 0
 
 
