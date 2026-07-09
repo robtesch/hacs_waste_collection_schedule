@@ -27,12 +27,49 @@ Public URLs (used by the upstream `durban_gov_za` source):
 
 ## Fork branch layout
 
+This fork is split so upstream stays easy to sync while Durban-specific work
+lives on dedicated branches.
+
 | Branch | Purpose |
 |---|---|
-| `master` | Mirrors `upstream/master` only — sync, do not develop here |
-| `tooling/durban-updater` | **Default branch.** Tooling, CI workflows, Durban updater Action |
-| `data/durban-gov-za` | Hosted ICS calendars + `index.json` |
-| `source/durban-gov-za-ics` | Clean upstream PR branches (from `upstream/master`) |
+| `master` | Mirrors `mampfes/hacs_waste_collection_schedule:master` only — sync, do not develop here |
+| `tooling/durban-updater` | **GitHub default branch.** Tooling, CI workflows, Durban updater Action |
+| `data/durban-gov-za` | Hosted ICS calendars + `index.json` (orphan data branch) |
+| `source/durban-gov-za-ics` | Clean upstream PR branches (always cut from `upstream/master`) |
+
+### Why `tooling/durban-updater` is the default branch
+
+GitHub only runs **scheduled** workflow cron jobs from the repository's **default
+branch**. The Durban calendar updater needs a weekly schedule, but we also want
+`master` to remain a clean mirror of upstream (no fork-only commits to re-apply
+after every sync).
+
+Making `tooling/durban-updater` the default branch gives us both:
+
+- `master` stays identical to upstream — easy to reset/merge when upstream moves
+- The updater workflow (`.github/workflows/update-durban-gov-za.yml`) runs on its
+  Monday 06:00 UTC schedule without adding fork-only files to `master`
+
+The trade-off is that `git clone` and the fork's GitHub landing page open on the
+tooling branch rather than `master`. That is fine for a personal infrastructure
+fork with a single maintainer.
+
+**Default branch setting:** `tooling/durban-updater` (verify under GitHub →
+Settings → General → Default branch).
+
+### Keeping `master` in sync with upstream
+
+From your local clone:
+
+```bash
+git fetch upstream
+git checkout master
+git reset --hard upstream/master
+git push origin master
+```
+
+Do not merge `tooling/durban-updater` into `master`. Upstream PRs are prepared
+from `upstream/master` via a worktree (see below), not from fork `master`.
 
 ## Automated weekly update
 
