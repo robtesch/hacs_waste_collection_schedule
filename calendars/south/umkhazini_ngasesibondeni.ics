@@ -1,0 +1,26 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//robtesch//eThekwini Waste Collection//EN
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:durban-south-umkhazini_ngasesibondeni-general-waste@robtesch.github
+SUMMARY:General Waste
+DTSTART;VALUE=DATE:20250112
+DTEND;VALUE=DATE:20250113
+RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=SU
+END:VEVENT
+BEGIN:VEVENT
+UID:durban-south-umkhazini_ngasesibondeni-recycling-even@robtesch.github
+SUMMARY:Recycling
+DTSTART;VALUE=DATE:20250112
+DTEND;VALUE=DATE:20250113
+RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SU
+END:VEVENT
+BEGIN:VEVENT
+UID:durban-south-umkhazini_ngasesibondeni-recycling-odd@robtesch.github
+SUMMARY:Recycling (odd ISO weeks)
+DTSTART;VALUE=DATE:20250119
+DTEND;VALUE=DATE:20250120
+RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SU
+END:VEVENT
+END:VCALENDAR
